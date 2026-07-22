@@ -1,7 +1,5 @@
 # LinkedIn Message Drafter
 
-![LinkedIn Message Drafter logo](assets/logo.svg)
-
 Write LinkedIn outreach that actually gets replies — personalized, warm, and ready in seconds. Feed it a name and a bit of context; it hands back a concise, human-sounding draft you can send as-is or tweak.
 
 **Draft-first and safe by design.** It does **not** scrape LinkedIn, automate browser actions, or send anything on its own. You stay in control of every message — review, copy, send. Ready to automate? Wire in an approved LinkedIn integration through the adapter below.
