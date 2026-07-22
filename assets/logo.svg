@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">LinkedIn Message Drafter logo</title>
+  <desc id="desc">A blue conversation bubble containing a white drafting pen and check mark.</desc>
+  <defs>
+    <linearGradient id="blue" x1="72" y1="56" x2="432" y2="456" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0A66C2"/>
+      <stop offset="1" stop-color="#084B91"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="150%">
+      <feDropShadow dx="0" dy="12" stdDeviation="12" flood-color="#063B70" flood-opacity=".22"/>
+    </filter>
+  </defs>
+  <path filter="url(#shadow)" fill="url(#blue)" d="M256 44c-117.1 0-212 84.5-212 188.8 0 54.2 25.9 103 67.5 137.7L92 439l78.3-31.2c26.2 9 55.1 13.9 85.7 13.9 117.1 0 212-84.5 212-188.9S373.1 44 256 44Z"/>
+  <path fill="#fff" d="m164.2 294.5 66.6-66.6 35.1 35.1-66.6 66.6c-2.4 2.4-5.4 4.1-8.7 5l-38.1 10.3 10.3-38.1c.9-3.3 2.6-6.3 5-8.7Z"/>
+  <path fill="#D9ECFF" d="m249.6 209.1 19.8-19.8c6.8-6.8 17.8-6.8 24.6 0l28.1 28.1c6.8 6.8 6.8 17.8 0 24.6l-19.8 19.8-52.7-52.7Z"/>
+  <path fill="none" stroke="#fff" stroke-linecap="round" stroke-linejoin="round" stroke-width="17" d="m303 330 28 28 61-70"/>
+</svg>
