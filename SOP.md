@@ -23,10 +23,11 @@ prospect.json  →  CLI  →  validate fields  →  build draft  →  print + sa
 ## One-time setup
 
 ```bash
-cd ~/linkedin-message-drafter
+git clone https://github.com/wuisabel-gif/linkedin-message-drafter.git
+cd linkedin-message-drafter
 python3 -m venv .venv
 source .venv/bin/activate
-pip install -r requirements.txt   # no third-party deps; harmless to run
+pip install -e .            # add [ai] for the Claude draft path: pip install -e ".[ai]"
 ```
 
 ---
@@ -57,7 +58,7 @@ Fill in the fields:
 ### Step 2 — Generate the draft
 
 ```bash
-PYTHONPATH=src python3 -m linkedin_message_drafter.cli my-prospect.json
+linkedin-draft my-prospect.json
 ```
 
 You'll see the draft printed, plus a line like:
@@ -90,8 +91,8 @@ Saved draft to drafts/20260722T191758Z-alex-rivera.txt
 |-------------------------------------------|----------------------------------|----------------------------------------------|
 | `Missing required field(s): ...`          | Empty/absent name, context, goal | Fill those fields in the JSON.               |
 | `Error: Expecting value: line 1 ...`      | Malformed JSON                   | Check commas, quotes, and braces.            |
-| `Usage: python -m ... PATH_TO_...JSON`    | No file path passed              | Pass exactly one path argument.              |
-| `ModuleNotFoundError`                     | `PYTHONPATH=src` missing         | Prefix the command with `PYTHONPATH=src`.    |
+| `linkedin-draft: command not found`       | Package not installed            | Run `pip install -e .` in the activated venv. |
+| `No prospects found.`                     | No JSON/CSV at the given path     | Point at a `.json`/`.csv` file or a folder of them. |
 
 ---
 

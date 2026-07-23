@@ -3,15 +3,15 @@
 ## 1. Run the draft-only version
 
 ```bash
-cd ~/linkedin-message-drafter
+git clone https://github.com/wuisabel-gif/linkedin-message-drafter.git
+cd linkedin-message-drafter
 python3 -m venv .venv
 source .venv/bin/activate
-pip install -r requirements.txt
-export PYTHONPATH="$PWD/src"
-python -m linkedin_message_drafter.cli src/linkedin_message_drafter/examples/prospect.json
+pip install -e .
+linkedin-draft src/linkedin_message_drafter/examples/prospect.json
 ```
 
-Edit the JSON to describe a real prospect using information you are allowed to use. Review the generated text for accuracy, relevance, and tone before manually pasting it into LinkedIn. Do not include sensitive personal data.
+Edit the JSON to describe a real prospect using information the sender is allowed to use. Review the generated text for accuracy, relevance, and tone before manually pasting it into LinkedIn. Do not include sensitive personal data.
 
 ## 2. Configure LinkedIn access yourself
 
@@ -40,18 +40,3 @@ A safe application flow is:
 ```text
 prospect data -> draft -> user edits -> user confirms -> approved adapter -> one send
 ```
-
-## 4. Publish your repository
-
-```bash
-cd ~/linkedin-message-drafter
-git init
-git add .
-git commit -m "Initial draft-first LinkedIn message assistant"
-git branch -M main
-# Create an empty private GitHub repository first, then:
-git remote add origin git@github.com:YOUR_ACCOUNT/linkedin-message-drafter.git
-git push -u origin main
-```
-
-Use a private repository while developing. Before publishing, confirm that `.env`, access tokens, and generated drafts are excluded from Git.

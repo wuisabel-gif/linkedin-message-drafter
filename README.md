@@ -9,7 +9,8 @@ Write LinkedIn outreach that actually gets replies — personalized, warm, and r
 ## Quick start
 
 ```bash
-cd ~/linkedin-message-drafter
+git clone https://github.com/wuisabel-gif/linkedin-message-drafter.git
+cd linkedin-message-drafter
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -e .            # add [ai] for the Claude draft path: pip install -e ".[ai]"
