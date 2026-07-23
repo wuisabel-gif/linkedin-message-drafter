@@ -79,3 +79,21 @@ Read `TUTORIAL.md` before configuring credentials or requesting permissions.
 ```bash
 python -m unittest discover -s tests -v
 ```
+
+## Publishing
+
+Releases publish to PyPI automatically via [Trusted Publishing](https://docs.pypi.org/trusted-publishers/) — no API token is stored anywhere. One-time setup:
+
+1. On [pypi.org](https://pypi.org/manage/account/publishing/), add a *pending publisher*: project `linkedin-message-drafter`, owner `wuisabel-gif`, repo `linkedin-message-drafter`, workflow `publish.yml`, environment `pypi`.
+2. Cut a release: bump `version` in `pyproject.toml`, then
+
+   ```bash
+   git tag v0.1.0 && git push origin v0.1.0
+   gh release create v0.1.0 --generate-notes
+   ```
+
+The `Publish to PyPI` workflow builds the sdist + wheel and uploads them. Local dry run:
+
+```bash
+python -m build && twine check dist/*
+```
