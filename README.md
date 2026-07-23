@@ -18,6 +18,16 @@ linkedin-draft src/linkedin_message_drafter/examples/prospect.json
 
 The `linkedin-draft` command prints a draft and saves it to `drafts/`.
 
+## Web UI
+
+Prefer a form to the CLI? A zero-dependency local UI ships with it:
+
+```bash
+linkedin-draft-web            # then open http://127.0.0.1:8000
+```
+
+Binds to localhost only, uses the same drafting engine (voice matching, slop check, short mode), and still just drafts — nothing is sent.
+
 ## Input
 
 See `src/linkedin_message_drafter/examples/prospect.json`. Required fields are `name`, `context`, and `goal`; `company`, `role`, and `relationship` are optional. CSV input uses the same column names, one prospect per row.

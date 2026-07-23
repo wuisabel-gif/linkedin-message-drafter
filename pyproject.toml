@@ -18,6 +18,7 @@ ai = ["anthropic>=0.40"]
 
 [project.scripts]
 linkedin-draft = "linkedin_message_drafter.cli:main"
+linkedin-draft-web = "linkedin_message_drafter.web:main"
 
 [project.urls]
 Homepage = "https://github.com/wuisabel-gif/linkedin-message-drafter"
