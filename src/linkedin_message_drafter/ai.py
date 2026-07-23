@@ -8,9 +8,11 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
+from .cadence import deslop
 from .drafts import Prospect, build_draft
 
 MODEL = "claude-opus-4-8"  # ponytail: swap to claude-haiku-4-5 if cost matters more than polish
+SLOP_THRESHOLD = 15  # cadence-deslop score above which we ask Claude to rewrite once
 
 # Cadence (https://github.com/wuisabel-gif/Cadence) collaboration: point
 # VOICE_SAMPLE at your own past writing and the draft is written to match that
@@ -74,13 +76,35 @@ def build_draft_ai(prospect: Prospect) -> str:
             "choice, and sentence rhythm. Mimic how this person speaks; do not "
             f"copy their content:\n\n{sample}"
         )
-    try:
+    def generate(sys_prompt: str) -> str:
         resp = anthropic.Anthropic().messages.create(
-            model=MODEL,
-            max_tokens=1024,
-            system=system,
+            model=MODEL, max_tokens=1024, system=sys_prompt,
             messages=[{"role": "user", "content": facts}],
         )
         return next(b.text for b in resp.content if b.type == "text").strip()
+
+    try:
+        draft = generate(system)
     except anthropic.AnthropicError:  # no creds, auth failure, API/connection error
         return build_draft(prospect)
+
+    # Cadence pass: score the draft with the real cadence-deslop detector and, if
+    # it reads as AI slop, rewrite once with the named tells fed back. No-op when
+    # cadence-deslop isn't installed (deslop() returns None).
+    report = deslop(draft)
+    if report and report.get("score", 0) > SLOP_THRESHOLD and report.get("findings"):
+        tells = ", ".join(sorted({f["rule"] for f in report["findings"]}))
+        retry_system = system + (
+            f"\n\nThe previous draft scored {report['score']}/100 on the Cadence "
+            f"AI-slop detector, flagged for: {tells}. Rewrite to eliminate those "
+            "tells — vary sentence rhythm, and cut hollow-confidence words, "
+            "reflexive triads, and clichéd openers."
+        )
+        try:
+            retry = generate(retry_system)
+        except anthropic.AnthropicError:
+            return draft
+        retry_report = deslop(retry)
+        if retry_report and retry_report.get("score", 100) < report["score"]:
+            return retry  # keep whichever the detector scores cleaner
+    return draft

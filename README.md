@@ -39,6 +39,12 @@ export VOICE_SAMPLE=~/my-writing-sample.txt   # one sample
 export VOICE_SAMPLE=~/my-linkedin-posts/       # or a folder of everything you've written
 ```
 
+**Automatic slop check.** If the [`cadence-deslop`](https://github.com/wuisabel-gif/Cadence) detector is installed, every AI draft is scored 0–100 for AI-slop tells (uniform rhythm, hollow-confidence words, clichéd openers). If a draft reads as slop, Claude rewrites it once with the named tells fed back, and the cleaner version is kept. It's a no-op when the detector isn't installed.
+
+```bash
+npm install -g cadence-deslop                 # or: export CADENCE_DESLOP=/path/to/deslop.mjs
+```
+
 For a deeper voice pass, run the [`/cadence`](https://github.com/wuisabel-gif/Cadence) skill on any saved draft in `drafts/`.
 
 ## Adding an approved API integration
