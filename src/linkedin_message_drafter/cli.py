@@ -10,23 +10,33 @@ from .cadence import deslop
 from .drafts import Prospect
 
 
-def _load_prospects(paths: list[str]) -> list[Prospect]:
-    """Load prospects from JSON files, directories of JSON, and CSV files.
+def _iter_prospects(paths: list[str]):
+    """Yield (label, prospect, error) per item across JSON/CSV files and directories.
 
     A directory contributes its *.json and *.csv; a CSV contributes one prospect
-    per row (columns match the JSON fields). Bad rows/files raise ValueError/OSError.
+    per row. A bad file or row yields an error for that item only — the rest of
+    the batch still drafts.
     """
-    prospects: list[Prospect] = []
     for p in paths:
         path = Path(p)
         sources = sorted([*path.glob("*.json"), *path.glob("*.csv")]) if path.is_dir() else [path]
         for src in sources:
             if src.suffix.lower() == ".csv":
-                with src.open(encoding="utf-8", newline="") as f:
-                    prospects.extend(Prospect.from_dict(row) for row in csv.DictReader(f))
+                try:
+                    rows = list(csv.DictReader(src.open(encoding="utf-8", newline="")))
+                except OSError as exc:
+                    yield (str(src), None, str(exc))
+                    continue
+                for i, row in enumerate(rows, start=2):  # row 1 is the header
+                    try:
+                        yield (f"{src}:row {i}", Prospect.from_dict(row), None)
+                    except ValueError as exc:
+                        yield (f"{src}:row {i}", None, str(exc))
             else:
-                prospects.append(Prospect.from_dict(json.loads(src.read_text(encoding="utf-8"))))
-    return prospects
+                try:
+                    yield (str(src), Prospect.from_dict(json.loads(src.read_text(encoding="utf-8"))), None)
+                except (OSError, json.JSONDecodeError, ValueError) as exc:
+                    yield (str(src), None, str(exc))
 
 
 def _save(draft: str, name: str) -> Path:
@@ -53,25 +63,26 @@ def main() -> int:
                         help="generate N AI drafts and keep the least AI-slop one (default 1)")
     args = parser.parse_args()
 
-    try:
-        prospects = _load_prospects(args.paths)
-    except (OSError, json.JSONDecodeError, ValueError) as exc:
-        print(f"Error: {exc}", file=sys.stderr)
-        return 1
-    if not prospects:
-        print("No prospects found.", file=sys.stderr)
-        return 2
-
-    for i, prospect in enumerate(prospects):
-        if i:
+    found = drafted = rc = 0
+    for label, prospect, error in _iter_prospects(args.paths):
+        found += 1
+        if error:
+            print(f"Skipped {label}: {error}", file=sys.stderr)
+            rc = 1
+            continue
+        if drafted:
             print("\n" + "=" * 40 + "\n")
+        drafted += 1
         draft = build_draft_ai(prospect, short=args.short, style=args.style, best_of=args.best_of)
         print(draft)
         report = deslop(draft)  # show the Cadence score when the detector is available
         if report:
             print(f"\nCadence: {report['score']}/100 (grade {report['grade']}), {len(draft)} chars")
         print(f"Saved draft to {_save(draft, prospect.name)}")
-    return 0
+    if not found:
+        print("No prospects found.", file=sys.stderr)
+        return 2
+    return rc
 
 
 if __name__ == "__main__":
