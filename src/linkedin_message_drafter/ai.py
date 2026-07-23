@@ -12,11 +12,32 @@ from .drafts import Prospect, build_draft
 
 MODEL = "claude-opus-4-8"  # ponytail: swap to claude-haiku-4-5 if cost matters more than polish
 
-# Cadence collaboration: point VOICE_SAMPLE at a file of your own past writing
-# (a few LinkedIn messages, an email, a blog post) and the draft is written to
-# match that voice. This is Cadence's learn-from-a-sample mechanism inline; for a
-# deeper voice pass, run the /cadence skill on a saved draft in drafts/.
+# Cadence (https://github.com/wuisabel-gif/Cadence) collaboration: point
+# VOICE_SAMPLE at your own past writing and the draft is written to match that
+# voice. It accepts either a single file OR a directory — point it at a folder of
+# all your previous posts and messages and Cadence learns from the whole corpus.
+# This is Cadence's learn-from-a-sample mechanism inline; for a deeper voice pass,
+# run the /cadence skill on a saved draft in drafts/.
 VOICE_SAMPLE = os.environ.get("VOICE_SAMPLE")
+
+
+def _load_voice(path: str) -> str:
+    """Return the writing sample(s): one file's text, or every file in a directory."""
+    p = Path(path)
+    if p.is_file():
+        return p.read_text(encoding="utf-8").strip()
+    if p.is_dir():
+        # ponytail: reads every readable file, sorted; 1M context easily holds a
+        # personal corpus. If yours is huge, keep the most representative samples.
+        texts = []
+        for f in sorted(p.rglob("*")):
+            if f.is_file() and not f.name.startswith("."):
+                try:
+                    texts.append(f.read_text(encoding="utf-8").strip())
+                except (UnicodeDecodeError, OSError):
+                    continue  # skip binaries / unreadable files
+        return "\n\n---\n\n".join(t for t in texts if t)
+    return ""
 
 
 def build_draft_ai(prospect: Prospect) -> str:
@@ -46,11 +67,12 @@ def build_draft_ai(prospect: Prospect) -> str:
         "no placeholders. Sign off with 'Best,' and nothing after it. "
         "Output only the message."
     )
-    if VOICE_SAMPLE and Path(VOICE_SAMPLE).is_file():
-        sample = Path(VOICE_SAMPLE).read_text(encoding="utf-8").strip()
+    sample = _load_voice(VOICE_SAMPLE) if VOICE_SAMPLE else ""
+    if sample:
         system += (
-            "\n\nMatch the voice of this writing sample — its tone, rhythm, and "
-            f"word choice. Do not copy its content:\n\n{sample}"
+            "\n\nMatch the voice of these writing samples — tone, rhythm, word "
+            "choice, and sentence rhythm. Mimic how this person speaks; do not "
+            f"copy their content:\n\n{sample}"
         )
     try:
         resp = anthropic.Anthropic().messages.create(

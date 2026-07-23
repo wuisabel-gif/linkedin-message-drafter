@@ -30,15 +30,16 @@ export ANTHROPIC_API_KEY=sk-ant-...
 PYTHONPATH=src python3 -m linkedin_message_drafter.cli my-prospect.json
 ```
 
-### Sounds like you (Cadence)
+### Sounds like you ([Cadence](https://github.com/wuisabel-gif/Cadence))
 
-Point `VOICE_SAMPLE` at a file of your own past writing (a few LinkedIn messages, an email, a blog post) and the AI draft matches your tone and rhythm — the same learn-from-a-sample approach as the Cadence voice skill, applied inline:
+Point `VOICE_SAMPLE` at your own past writing and the AI draft mimics the way you speak — tone, rhythm, and word choice. It takes a single file **or a directory**: drop in a folder of all your previous posts and messages and [Cadence](https://github.com/wuisabel-gif/Cadence) learns from the whole corpus.
 
 ```bash
-export VOICE_SAMPLE=~/my-writing-sample.txt
+export VOICE_SAMPLE=~/my-writing-sample.txt   # one sample
+export VOICE_SAMPLE=~/my-linkedin-posts/       # or a folder of everything you've written
 ```
 
-For a deeper voice pass, run the `/cadence` skill on any saved draft in `drafts/`.
+For a deeper voice pass, run the [`/cadence`](https://github.com/wuisabel-gif/Cadence) skill on any saved draft in `drafts/`.
 
 ## Adding an approved API integration
 
