@@ -6,18 +6,30 @@ Write LinkedIn outreach that actually gets replies — personalized, warm, and r
 
 **Draft-first and safe by design.** It does **not** scrape LinkedIn, automate browser actions, or send anything on its own. You stay in control of every message — review, copy, send. Ready to automate? Wire in an approved LinkedIn integration through the adapter below.
 
+## Install
+
+```bash
+pipx install linkedin-message-drafter          # or: pip install linkedin-message-drafter
+# for the Claude draft path: pipx install "linkedin-message-drafter[ai]"
+```
+
+[![PyPI](https://img.shields.io/pypi/v/linkedin-message-drafter)](https://pypi.org/project/linkedin-message-drafter/)
+
 ## Quick start
+
+```bash
+linkedin-draft prospect.json      # prints a draft and saves it to drafts/
+```
+
+### From source (development)
 
 ```bash
 git clone https://github.com/wuisabel-gif/linkedin-message-drafter.git
 cd linkedin-message-drafter
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -e .            # add [ai] for the Claude draft path: pip install -e ".[ai]"
+python3 -m venv .venv && source .venv/bin/activate
+pip install -e .                  # add [ai] for the Claude draft path: pip install -e ".[ai]"
 linkedin-draft src/linkedin_message_drafter/examples/prospect.json
 ```
-
-The `linkedin-draft` command prints a draft and saves it to `drafts/`.
 
 ## Web UI
 
