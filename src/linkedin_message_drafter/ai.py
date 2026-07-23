@@ -58,7 +58,8 @@ def _load_voice(path: str) -> str:
     return ""
 
 
-def build_draft_ai(prospect: Prospect, short: bool = False, style: str = "") -> str:
+def build_draft_ai(prospect: Prospect, short: bool = False, style: str = "",
+                   best_of: int = 1) -> str:
     """Draft with Claude if credentials resolve; otherwise fall back to the template.
 
     Any credential the SDK understands works — ANTHROPIC_API_KEY, an `ant auth
@@ -66,7 +67,8 @@ def build_draft_ai(prospect: Prospect, short: bool = False, style: str = "") -> 
     so the tool always produces a draft. (ponytail: broad fallback is deliberate.)
 
     short=True targets LinkedIn's 300-char connection-note limit. style names a
-    Cadence voice preset (see CADENCE_VOICES).
+    Cadence voice preset (see CADENCE_VOICES). best_of>1 generates that many
+    candidates and keeps whichever cadence-deslop scores cleanest.
     """
     try:
         import anthropic  # lazy: the template path needs no dependency
@@ -115,14 +117,22 @@ def build_draft_ai(prospect: Prospect, short: bool = False, style: str = "") -> 
         return fit(text) if short else text  # hard-cap short notes at 300 chars
 
     try:
-        draft = generate(system)
+        candidates = [generate(system) for _ in range(max(1, best_of))]
     except anthropic.AnthropicError:  # no creds, auth failure, API/connection error
         return build_draft(prospect, short=short)
 
-    # Cadence pass: score the draft with the real cadence-deslop detector and, if
-    # it reads as AI slop, rewrite once with the named tells fed back. No-op when
-    # cadence-deslop isn't installed (deslop() returns None).
-    report = deslop(draft)
+    # Best-of-N: score each candidate with the real cadence-deslop detector and
+    # keep the cleanest. When the detector isn't installed, take the first draft.
+    reports = [deslop(c) for c in candidates]
+    if any(r is not None for r in reports):
+        best = min(range(len(candidates)),
+                   key=lambda i: reports[i]["score"] if reports[i] else 10**6)
+        draft, report = candidates[best], reports[best]
+    else:
+        return candidates[0]
+
+    # If the cleanest draft still reads as slop, rewrite once with the named
+    # tells fed back and keep whichever the detector scores cleaner.
     if report and report.get("score", 0) > SLOP_THRESHOLD and report.get("findings"):
         tells = ", ".join(sorted({f["rule"] for f in report["findings"]}))
         retry_system = system + (

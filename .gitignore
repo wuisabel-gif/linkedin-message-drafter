@@ -4,3 +4,6 @@ __pycache__/
 *.py[cod]
 drafts/
 .DS_Store
+*.egg-info/
+build/
+dist/

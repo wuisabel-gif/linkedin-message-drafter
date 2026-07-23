@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "linkedin-message-drafter"
+version = "0.1.0"
+description = "Draft-first CLI for personalized LinkedIn outreach — template or Claude-backed drafts with voice matching. Never scrapes or auto-sends."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+keywords = ["linkedin", "outreach", "cli", "claude", "anthropic", "cold-outreach"]
+
+# Core CLI has no dependencies. The AI draft path is opt-in:
+#   pip install "linkedin-message-drafter[ai]"
+[project.optional-dependencies]
+ai = ["anthropic>=0.40"]
+
+[project.scripts]
+linkedin-draft = "linkedin_message_drafter.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/wuisabel-gif/linkedin-message-drafter"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+linkedin_message_drafter = ["examples/*.json"]
