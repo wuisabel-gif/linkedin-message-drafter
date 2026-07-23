@@ -1,4 +1,0 @@
-# Only needed for the optional AI draft path (when API credentials resolve —
-# ANTHROPIC_API_KEY or an `ant auth login` profile).
-# The template path in drafts.py has zero dependencies.
-anthropic>=0.40

@@ -95,7 +95,12 @@ class Handler(BaseHTTPRequestHandler):
 
 def main() -> int:
     port = int(sys.argv[1]) if len(sys.argv) > 1 else 8000
-    server = ThreadingHTTPServer(("127.0.0.1", port), Handler)
+    try:
+        server = ThreadingHTTPServer(("127.0.0.1", port), Handler)
+    except OSError as exc:
+        print(f"Cannot start on port {port}: {exc}.\n"
+              f"Try another port:  linkedin-draft-web {port + 1}", file=sys.stderr)
+        return 1
     print(f"Serving on http://127.0.0.1:{port}  (Ctrl-C to stop)")
     try:
         server.serve_forever()

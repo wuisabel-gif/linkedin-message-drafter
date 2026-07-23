@@ -3,11 +3,17 @@ import csv
 import json
 import sys
 from datetime import datetime, timezone
+from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
 
 from .ai import build_draft_ai
 from .cadence import deslop
 from .drafts import Prospect
+
+try:
+    __version__ = version("linkedin-message-drafter")
+except PackageNotFoundError:  # running from source without an install
+    __version__ = "0.0.0+source"
 
 
 def _iter_prospects(paths: list[str]):
@@ -43,7 +49,12 @@ def _save(draft: str, name: str) -> Path:
     output_dir = Path("drafts")
     output_dir.mkdir(exist_ok=True)
     stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
-    output = output_dir / f"{stamp}-{name.lower().replace(' ', '-')}.txt"
+    base = f"{stamp}-{name.lower().replace(' ', '-')}"
+    output = output_dir / f"{base}.txt"
+    n = 2  # never overwrite a draft from the same second (batch, duplicate names)
+    while output.exists():
+        output = output_dir / f"{base}-{n}.txt"
+        n += 1
     output.write_text(draft + "\n", encoding="utf-8")
     return output
 
@@ -53,6 +64,7 @@ def main() -> int:
         prog="linkedin-draft",
         description="Draft personalized LinkedIn outreach. Never scrapes or sends.",
     )
+    parser.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
     parser.add_argument("paths", nargs="+", metavar="PATH",
                         help="prospect JSON/CSV file(s) or director(ies) of them (batch)")
     parser.add_argument("--short", action="store_true",
