@@ -24,6 +24,18 @@ class DraftTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             Prospect.from_dict({"name": "Sam"})
 
+    def test_short_note_fits_connection_limit(self):
+        from linkedin_message_drafter.drafts import NOTE_LIMIT, fit
+        note = build_draft(Prospect.from_dict({
+            "name": "Sam Lee",
+            "context": "your very long post about " + "scaling systems " * 30,
+            "goal": "would love to connect",
+        }), short=True)
+        self.assertLessEqual(len(note), NOTE_LIMIT)
+        self.assertIn("Hi Sam", note)
+        # fit() trims at a word boundary, never mid-word
+        self.assertLessEqual(len(fit("word " * 100)), NOTE_LIMIT)
+
 
 if __name__ == "__main__":
     unittest.main()

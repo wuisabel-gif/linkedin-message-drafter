@@ -24,17 +24,39 @@ class Prospect:
         )
 
 
+NOTE_LIMIT = 300  # LinkedIn connection-request notes are capped at 300 characters
+
+
 def _sentence(text: str) -> str:
     # Uppercase first letter only; str.capitalize() would lowercase "ML", "Q4", etc.
     text = text.rstrip(".")
     return text[:1].upper() + text[1:]
 
 
-def build_draft(prospect: Prospect) -> str:
-    """Create a concise draft without contacting LinkedIn or any external service."""
+def fit(text: str, limit: int = NOTE_LIMIT) -> str:
+    """Trim text to `limit` chars at a word boundary (adds an ellipsis if cut)."""
+    text = text.strip()
+    if len(text) <= limit:
+        return text
+    cut = text[: limit - 1].rsplit(" ", 1)[0].rstrip(",.;:—- ")
+    return cut + "…"
+
+
+def build_draft(prospect: Prospect, short: bool = False) -> str:
+    """Create a concise draft without contacting LinkedIn or any external service.
+
+    short=True returns a one-line note that fits LinkedIn's 300-char connection
+    request limit; otherwise a full multi-line message.
+    """
     first_name = prospect.name.split()[0]
     # ponytail: simple string assembly; swap for an LLM prompt if you want richer copy.
     at_company = f" at {prospect.company}" if prospect.company else ""
+    if short:
+        note = (
+            f"Hi {first_name}, {_sentence(prospect.context)} caught my eye. "
+            f"{_sentence(prospect.goal)}. Open to connecting?"
+        )
+        return fit(note)
     role = f", and what you're doing as {prospect.role}{at_company}" if prospect.role else at_company
     return (
         f"Hi {first_name},\n\n"

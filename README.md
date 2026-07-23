@@ -21,6 +21,22 @@ The command prints a draft and saves it to `drafts/`.
 
 See `src/linkedin_message_drafter/examples/prospect.json`. Required fields are `name`, `context`, and `goal`; `company`, `role`, and `relationship` are optional.
 
+## Options
+
+```bash
+# Batch — pass multiple files or a whole folder of prospect JSONs
+PYTHONPATH=src python3 -m linkedin_message_drafter.cli ./prospects/
+
+# Connection-request note, guaranteed under LinkedIn's 300-char limit
+PYTHONPATH=src python3 -m linkedin_message_drafter.cli --short my-prospect.json
+
+# Write in a Cadence voice preset (AI path; needs CADENCE_VOICES)
+export CADENCE_VOICES=/path/to/Cadence/voices
+PYTHONPATH=src python3 -m linkedin_message_drafter.cli --style punchy my-prospect.json
+```
+
+`--short` works with both the template and AI paths; `--style` applies to AI drafts only. Available presets are the `.md` files in Cadence's `voices/` (`punchy`, `column`, `plain`, `dispatch`, …).
+
 ## AI drafting (optional)
 
 Set `ANTHROPIC_API_KEY` to draft with Claude instead of the built-in template — richer, more personalized copy. With no key set, the tool uses the dependency-free template and works fully offline.

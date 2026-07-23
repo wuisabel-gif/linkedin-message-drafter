@@ -6,13 +6,29 @@ so the tool still works offline and in tests. Set ANTHROPIC_API_KEY to enable.
 from __future__ import annotations
 
 import os
+import sys
 from pathlib import Path
 
 from .cadence import deslop
-from .drafts import Prospect, build_draft
+from .drafts import NOTE_LIMIT, Prospect, build_draft, fit
 
 MODEL = "claude-opus-4-8"  # ponytail: swap to claude-haiku-4-5 if cost matters more than polish
 SLOP_THRESHOLD = 15  # cadence-deslop score above which we ask Claude to rewrite once
+
+# --style <name> loads a Cadence voice preset (voices/<name>.md) as a style guide.
+# Point CADENCE_VOICES at Cadence's voices/ dir; unknown/missing presets are ignored.
+STYLE_DIR = os.environ.get("CADENCE_VOICES")
+
+
+def _load_style(name: str) -> str:
+    """Return the text of a Cadence voice preset, or '' if unavailable."""
+    if not name or not STYLE_DIR:
+        return ""
+    preset = Path(STYLE_DIR) / f"{name}.md"
+    if preset.is_file():
+        return preset.read_text(encoding="utf-8").strip()
+    print(f"Note: style preset '{name}' not found in {STYLE_DIR}; ignoring.", file=sys.stderr)
+    return ""
 
 # Cadence (https://github.com/wuisabel-gif/Cadence) collaboration: point
 # VOICE_SAMPLE at your own past writing and the draft is written to match that
@@ -42,17 +58,20 @@ def _load_voice(path: str) -> str:
     return ""
 
 
-def build_draft_ai(prospect: Prospect) -> str:
+def build_draft_ai(prospect: Prospect, short: bool = False, style: str = "") -> str:
     """Draft with Claude if credentials resolve; otherwise fall back to the template.
 
     Any credential the SDK understands works — ANTHROPIC_API_KEY, an `ant auth
     login` profile, etc. On missing creds, no SDK, or an API error, we fall back
     so the tool always produces a draft. (ponytail: broad fallback is deliberate.)
+
+    short=True targets LinkedIn's 300-char connection-note limit. style names a
+    Cadence voice preset (see CADENCE_VOICES).
     """
     try:
         import anthropic  # lazy: the template path needs no dependency
     except ImportError:
-        return build_draft(prospect)
+        return build_draft(prospect, short=short)
 
     facts = "\n".join(
         f"- {k}: {v}"
@@ -62,13 +81,24 @@ def build_draft_ai(prospect: Prospect) -> str:
             ("relationship", prospect.relationship),
         ) if v
     )
-    system = (
-        "Write one short, warm LinkedIn outreach message (3-5 sentences). "
-        "Greet by first name, reference the specific context, state the goal, "
-        "end with a low-pressure ask. No subject line, no emoji, no hashtags, "
-        "no placeholders. Sign off with 'Best,' and nothing after it. "
-        "Output only the message."
-    )
+    if short:
+        system = (
+            "Write a LinkedIn connection-request note — one or two sentences, "
+            f"strictly under {NOTE_LIMIT} characters. Greet by first name, name "
+            "the specific context, and make a brief low-pressure ask. No emoji, "
+            "no hashtags, no sign-off, no placeholders. Output only the note."
+        )
+    else:
+        system = (
+            "Write one short, warm LinkedIn outreach message (3-5 sentences). "
+            "Greet by first name, reference the specific context, state the goal, "
+            "end with a low-pressure ask. No subject line, no emoji, no hashtags, "
+            "no placeholders. Sign off with 'Best,' and nothing after it. "
+            "Output only the message."
+        )
+    preset = _load_style(style)
+    if preset:
+        system += f"\n\nWrite in this voice:\n\n{preset}"
     sample = _load_voice(VOICE_SAMPLE) if VOICE_SAMPLE else ""
     if sample:
         system += (
@@ -81,12 +111,13 @@ def build_draft_ai(prospect: Prospect) -> str:
             model=MODEL, max_tokens=1024, system=sys_prompt,
             messages=[{"role": "user", "content": facts}],
         )
-        return next(b.text for b in resp.content if b.type == "text").strip()
+        text = next(b.text for b in resp.content if b.type == "text").strip()
+        return fit(text) if short else text  # hard-cap short notes at 300 chars
 
     try:
         draft = generate(system)
     except anthropic.AnthropicError:  # no creds, auth failure, API/connection error
-        return build_draft(prospect)
+        return build_draft(prospect, short=short)
 
     # Cadence pass: score the draft with the real cadence-deslop detector and, if
     # it reads as AI slop, rewrite once with the named tells fed back. No-op when
