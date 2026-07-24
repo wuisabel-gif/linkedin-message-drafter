@@ -9,11 +9,9 @@ import os
 import sys
 from pathlib import Path
 
-from .cadence import deslop
 from .drafts import NOTE_LIMIT, Prospect, build_draft, fit
 
 MODEL = "claude-opus-4-8"  # ponytail: swap to claude-haiku-4-5 if cost matters more than polish
-SLOP_THRESHOLD = 15  # cadence-deslop score above which we ask Claude to rewrite once
 
 # --style <name> loads a Cadence voice preset (voices/<name>.md) as a style guide.
 # Point CADENCE_VOICES at Cadence's voices/ dir; unknown/missing presets are ignored.
@@ -58,8 +56,7 @@ def _load_voice(path: str) -> str:
     return ""
 
 
-def build_draft_ai(prospect: Prospect, short: bool = False, style: str = "",
-                   best_of: int = 1) -> str:
+def build_draft_ai(prospect: Prospect, short: bool = False, style: str = "") -> str:
     """Draft with Claude if credentials resolve; otherwise fall back to the template.
 
     Any credential the SDK understands works — ANTHROPIC_API_KEY, an `ant auth
@@ -67,8 +64,8 @@ def build_draft_ai(prospect: Prospect, short: bool = False, style: str = "",
     so the tool always produces a draft. (ponytail: broad fallback is deliberate.)
 
     short=True targets LinkedIn's 300-char connection-note limit. style names a
-    Cadence voice preset (see CADENCE_VOICES). best_of>1 generates that many
-    candidates and keeps whichever cadence-deslop scores cleanest.
+    Cadence voice preset (see CADENCE_VOICES). For slop cleanup, run the draft
+    through Cadence — the drafter no longer bundles a deslop pass.
     """
     try:
         import anthropic  # lazy: the template path needs no dependency
@@ -117,35 +114,6 @@ def build_draft_ai(prospect: Prospect, short: bool = False, style: str = "",
         return fit(text) if short else text  # hard-cap short notes at 300 chars
 
     try:
-        candidates = [generate(system) for _ in range(max(1, best_of))]
+        return generate(system)
     except anthropic.AnthropicError:  # no creds, auth failure, API/connection error
         return build_draft(prospect, short=short)
-
-    # Best-of-N: score each candidate with the real cadence-deslop detector and
-    # keep the cleanest. When the detector isn't installed, take the first draft.
-    reports = [deslop(c) for c in candidates]
-    if any(r is not None for r in reports):
-        best = min(range(len(candidates)),
-                   key=lambda i: reports[i]["score"] if reports[i] else 10**6)
-        draft, report = candidates[best], reports[best]
-    else:
-        return candidates[0]
-
-    # If the cleanest draft still reads as slop, rewrite once with the named
-    # tells fed back and keep whichever the detector scores cleaner.
-    if report and report.get("score", 0) > SLOP_THRESHOLD and report.get("findings"):
-        tells = ", ".join(sorted({f["rule"] for f in report["findings"]}))
-        retry_system = system + (
-            f"\n\nThe previous draft scored {report['score']}/100 on the Cadence "
-            f"AI-slop detector, flagged for: {tells}. Rewrite to eliminate those "
-            "tells — vary sentence rhythm, and cut hollow-confidence words, "
-            "reflexive triads, and clichéd openers."
-        )
-        try:
-            retry = generate(retry_system)
-        except anthropic.AnthropicError:
-            return draft
-        retry_report = deslop(retry)
-        if retry_report and retry_report.get("score", 100) < report["score"]:
-            return retry  # keep whichever the detector scores cleaner
-    return draft

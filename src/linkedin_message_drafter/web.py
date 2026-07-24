@@ -12,7 +12,6 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs
 
 from .ai import build_draft_ai
-from .cadence import deslop
 from .drafts import Prospect
 
 FIELDS = ("name", "context", "goal", "company", "role", "relationship")
@@ -83,10 +82,7 @@ class Handler(BaseHTTPRequestHandler):
         except ValueError as exc:
             self._send(_render(values, f'<p class="err">{html.escape(str(exc))}</p>'))
             return
-        report = deslop(draft)
-        meta = f"Cadence {report['score']}/100 (grade {report['grade']}), " \
-               f"{len(draft)} chars" if report else f"{len(draft)} chars"
-        result = RESULT.format(draft=html.escape(draft), meta=meta)
+        result = RESULT.format(draft=html.escape(draft), meta=f"{len(draft)} chars")
         self._send(_render(values, result))
 
     def log_message(self, *args):  # quiet: no per-request stderr noise

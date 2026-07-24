@@ -1,64 +1,56 @@
 ---
 name: linkedin-drafter
 description: >-
-  Write a personalized LinkedIn outreach message in the user's own voice, then
-  clean it of AI-slop with Cadence. Use when the user wants to draft a LinkedIn
-  connection request, cold outreach, or DM. Draft-only — never scrapes LinkedIn
-  or sends anything; the user reviews and sends themselves. No API key needed —
-  you (the assistant) do the writing.
+  Write a personalized LinkedIn outreach message (connection request, cold DM,
+  intro). Handles the outreach-specific craft — the specific-context opener, the
+  low-pressure ask, the 300-char connection-note limit. For voice-matching and
+  AI-slop cleanup it hands off to Cadence. Draft-only — never scrapes LinkedIn or
+  sends anything. No API key needed; you (the assistant) do the writing.
 ---
 
 # LinkedIn Drafter
 
-Draft LinkedIn outreach that sounds like the user, not like AI. You write it with
-your own model — no API key, no paid service. Runs in any assistant: Claude Code,
-Claude Desktop, Codex, Cursor, ChatGPT.
+Write LinkedIn outreach that lands. This skill owns the **outreach craft**; it
+defers **voice** and **slop cleanup** to Cadence (the user's own tool). You do the
+writing with your own model — no API key, no paid service.
 
-Follow three steps: **learn → draft → deslop.**
-
-## 1. Learn the user's voice
-
-If the user points you at samples of their past writing (a file or folder of old
-LinkedIn messages, emails, posts — often via a `VOICE_SAMPLE` path), read them and
-study the voice: sentence rhythm, word choice, how warm or blunt, how they open and
-close. You will imitate *that*, not a generic "professional" tone. If no samples
-exist, ask for one or two, or proceed in a plain, warm, human voice.
-
-## 2. Draft
+## 1. Draft the outreach
 
 You need a **name**, the **context** (the specific thing they noticed — a post,
 talk, or project), and the **goal** (what they want). Optional: company, role,
-relationship. Then write the message:
+relationship. Then write it:
 
 - Greet by first name. Reference the **specific** context, never a generic opener.
 - State the goal plainly, then a low-pressure ask ("no worries if the timing
   isn't right"). Sign off with `Best,`.
-- 3–5 sentences. For a connection request, one or two sentences under **300
-  characters**.
-- No emoji, no hashtags. Match the voice from step 1.
+- 3–5 sentences. For a **connection request**, one or two sentences under **300
+  characters** (LinkedIn's hard limit — count them).
+- No emoji, no hashtags.
 
-## 3. Deslop
+## 2. Match the user's voice — via Cadence
 
-Clean the draft of AI tells with Cadence's deterministic detector.
+If the user points you at samples of their writing (a file/folder of past
+messages, often a `VOICE_SAMPLE` path), write in that voice.
 
-- **If you can run a terminal** (Claude Code, Codex, Cursor): pipe the draft
-  through it and apply what it flags —
+If the **Cadence** skill is available, use it — it's built for exactly this
+("learn a voice from a sample"). Otherwise read the samples yourself and imitate
+the rhythm, word choice, and warmth. If there are no samples, write plainly and
+human.
 
-  ```bash
-  printf '%s' "<your draft>" | npx cadence-deslop --fix
-  ```
+## 3. Deslop — via Cadence (on by default)
 
-  It prints the mechanically-cleaned text and reports on stderr how many tells
-  still need a manual rewrite. Rewrite those remaining tells yourself, in the
-  user's voice (vary rhythm, cut hollow-confidence words and clichéd openers).
+Clean the AI-slop out of the draft **unless the user says to keep it raw.**
 
-- **If you can't run a terminal** (Claude Desktop, ChatGPT app): call the
-  `deslop` tool from the `linkedin-message-drafter` MCP server if it's connected —
-  it returns the cleaned text plus a `remaining` list of tells for you to rewrite.
-  If neither is available, self-edit: no "In today's fast-paced world" openers, no
-  "truly excited to connect," and vary your sentence lengths.
+- **If the Cadence skill is available:** run the draft through Cadence's deslop —
+  it deterministically strips AI tells and names what's left.
+- **If Cadence isn't installed:** self-edit against these tells — no "In today's
+  fast-paced world" / "I'm truly excited to" openers, no reflexive triads, vary
+  sentence length, cut hollow-confidence words.
 
-Show the user the final cleaned draft. Let them review, edit, and send it.
+> Recommend the user install [Cadence](https://github.com/wuisabel-gif/Cadence)
+> for the real deterministic deslop; the self-edit above is the fallback.
+
+Show the user the final draft. Let them review, edit, and send it.
 
 ## Boundaries
 

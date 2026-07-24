@@ -7,7 +7,6 @@ from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
 
 from .ai import build_draft_ai
-from .cadence import deslop
 from .drafts import Prospect
 
 try:
@@ -71,8 +70,6 @@ def main() -> int:
                         help="connection-request note under 300 characters")
     parser.add_argument("--style", default="",
                         help="Cadence voice preset name (needs CADENCE_VOICES); AI path only")
-    parser.add_argument("--best-of", type=int, default=1, metavar="N",
-                        help="generate N AI drafts and keep the least AI-slop one (default 1)")
     args = parser.parse_args()
 
     found = drafted = rc = 0
@@ -85,11 +82,8 @@ def main() -> int:
         if drafted:
             print("\n" + "=" * 40 + "\n")
         drafted += 1
-        draft = build_draft_ai(prospect, short=args.short, style=args.style, best_of=args.best_of)
+        draft = build_draft_ai(prospect, short=args.short, style=args.style)
         print(draft)
-        report = deslop(draft)  # show the Cadence score when the detector is available
-        if report:
-            print(f"\nCadence: {report['score']}/100 (grade {report['grade']}), {len(draft)} chars")
         print(f"Saved draft to {_save(draft, prospect.name)}")
     if not found:
         print("No prospects found.", file=sys.stderr)

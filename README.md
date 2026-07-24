@@ -8,7 +8,7 @@ Write LinkedIn outreach that actually gets replies — personalized, warm, and r
 
 **No API key needed.** The best way to use it is inside an AI assistant you already
 pay for — Claude Code, Claude Desktop, Codex, Cursor, or ChatGPT — which does the
-writing on your existing subscription. See [Use it in your AI assistant](#use-it-in-your-ai-assistant--no-api-key). The standalone CLI works too: free offline via a
+writing on your existing subscription. See [Use it in your AI assistant](#use-it-in-your-ai-assistant--no-api-key-recommended). The standalone CLI works too: free offline via a
 built-in template, or with your own Anthropic API key for richer copy.
 
 ## Install
@@ -60,9 +60,6 @@ linkedin-draft prospects.csv
 # Connection-request note, guaranteed under LinkedIn's 300-char limit
 linkedin-draft --short my-prospect.json
 
-# Best-of-N — generate 3 AI drafts, keep the one cadence-deslop scores cleanest
-linkedin-draft --best-of 3 my-prospect.json
-
 # Write in a Cadence voice preset (AI path; needs CADENCE_VOICES)
 export CADENCE_VOICES=/path/to/Cadence/voices
 linkedin-draft --style punchy my-prospect.json
@@ -91,42 +88,24 @@ export VOICE_SAMPLE=~/my-writing-sample.txt   # one sample
 export VOICE_SAMPLE=~/my-linkedin-posts/       # or a folder of everything you've written
 ```
 
-**Automatic slop check.** If the [`cadence-deslop`](https://github.com/wuisabel-gif/Cadence) detector is installed, every AI draft is scored 0–100 for AI-slop tells (uniform rhythm, hollow-confidence words, clichéd openers). If a draft reads as slop, Claude rewrites it once with the named tells fed back, and the cleaner version is kept. It's a no-op when the detector isn't installed.
+**AI-slop cleanup is Cadence's job.** This tool writes the outreach; to strip AI
+tells, run the draft through [Cadence](https://github.com/wuisabel-gif/Cadence) —
+its deterministic `cadence-deslop` detector. The drafter doesn't bundle its own
+copy; it composes with Cadence so there's one source of truth for voice + slop.
 
-```bash
-npm install -g cadence-deslop                 # or: export CADENCE_DESLOP=/path/to/deslop.mjs
-```
+## Use it in your AI assistant — no API key (recommended)
 
-For a deeper voice pass, run the [`/cadence`](https://github.com/wuisabel-gif/Cadence) skill on any saved draft in `drafts/`.
-
-## Use it in your AI assistant — no API key
-
-**This is the recommended way.** Your own assistant does the writing, powered by
-the Claude / Codex / ChatGPT subscription you already pay for — no API key, no
-hosting, no per-message cost. The assistant learns your voice, drafts in it, and
-cleans the AI-slop with Cadence.
-
-**Skill** (Claude Code, Codex, Cursor — anything that reads skills):
+Your own assistant does the writing, powered by the Claude / Codex / ChatGPT
+subscription you already pay for — no API key, no hosting, no per-message cost.
 
 Drop [`skills/linkedin-drafter/SKILL.md`](skills/linkedin-drafter/SKILL.md) into
-your assistant's skills directory. Then just ask it to draft a LinkedIn message —
-it follows the **learn → draft → deslop** flow, running `npx cadence-deslop --fix`
-itself to clean the result.
+your assistant's skills directory (Claude Code, Codex, Cursor, …). Then just ask
+it to draft a LinkedIn message. The skill owns the **outreach craft** — the
+specific-context opener, the low-pressure ask, the 300-char note limit — and
+**hands off voice-matching and deslop to [Cadence](https://github.com/wuisabel-gif/Cadence)** if you have it installed (with a self-edit fallback if you don't).
 
-**MCP server** (Claude Desktop, ChatGPT — apps that can't run a terminal):
-
-These can't run `npx`, so they reach Cadence through an MCP tool instead. Install
-the extra and register `linkedin-draft-mcp` in your MCP client:
-
-```bash
-pip install "linkedin-message-drafter[mcp]"
-```
-
-It exposes one tool — `deslop` — which cleans a draft with Cadence and returns
-the tells still needing a voice rewrite. The assistant writes the draft; the tool
-cleans it. Needs Node + `cadence-deslop` on the machine running the server.
-
-Both paths stay draft-only — nothing is scraped or sent.
+Install Cadence too for the real deterministic voice + deslop. Everything stays
+draft-only — nothing is scraped or sent.
 
 ## Adding an approved API integration
 
