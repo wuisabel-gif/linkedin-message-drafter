@@ -91,6 +91,24 @@ npm install -g cadence-deslop                 # or: export CADENCE_DESLOP=/path/
 
 For a deeper voice pass, run the [`/cadence`](https://github.com/wuisabel-gif/Cadence) skill on any saved draft in `drafts/`.
 
+## Use it inside Claude or ChatGPT
+
+The drafter plugs into AI assistants three ways:
+
+- **MCP server** (Claude Desktop/Code, ChatGPT MCP connector). Install the extra and register `linkedin-draft-mcp`:
+
+  ```bash
+  pip install "linkedin-message-drafter[mcp]"
+  ```
+
+  It exposes `draft_message` and `score_text` tools over stdio. Point your MCP client at the `linkedin-draft-mcp` command.
+
+- **Claude Skill** — `skills/linkedin-drafter/SKILL.md`. Drop it into your Claude skills directory (or plugin) and Claude drafts on request.
+
+- **ChatGPT GPT Action** — `integrations/chatgpt-action-openapi.yaml`. Host the JSON backend (`linkedin-draft-web` serves `POST /api/draft`) behind a public HTTPS URL, set that URL in the spec's `servers`, and import it as an Action in a custom GPT.
+
+All three stay draft-only: they return a message (and its Cadence slop score); nothing is scraped or sent.
+
 ## Adding an approved API integration
 
 `src/linkedin_message_drafter/linkedin.py` contains a deliberately unimplemented `LinkedInClient`. Implement only the endpoints and scopes that LinkedIn has approved for your application. Keep the default workflow draft-only and require a user confirmation before any send operation. Do not add scraping, credential collection, or bulk/unattended sending.

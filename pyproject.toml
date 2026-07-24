@@ -15,10 +15,12 @@ keywords = ["linkedin", "outreach", "cli", "claude", "anthropic", "cold-outreach
 #   pip install "linkedin-message-drafter[ai]"
 [project.optional-dependencies]
 ai = ["anthropic>=0.40"]
+mcp = ["mcp>=1.2"]
 
 [project.scripts]
 linkedin-draft = "linkedin_message_drafter.cli:main"
 linkedin-draft-web = "linkedin_message_drafter.web:main"
+linkedin-draft-mcp = "linkedin_message_drafter.mcp_server:main"
 
 [project.urls]
 Homepage = "https://github.com/wuisabel-gif/linkedin-message-drafter"
