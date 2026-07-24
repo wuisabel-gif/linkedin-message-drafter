@@ -1,62 +1,38 @@
-"""MCP server exposing the drafter as tools for Claude, ChatGPT, and other hosts.
+"""MCP server exposing Cadence's deslop cleaner as a tool for AI assistants.
 
-Run:  linkedin-draft-mcp        (stdio transport; configure it in your MCP client)
-Requires the [mcp] extra:  pip install "linkedin-message-drafter[mcp]"
+The assistant (Claude Desktop/Code, ChatGPT, Cursor, ...) writes the draft in
+your voice using its own subscription — no API key needed. This server gives it
+one deterministic thing it can't do on its own: clean the AI-slop out of the
+draft with cadence-deslop.
 
-Tools:
-  draft_message — build a personalized draft (+ its Cadence slop score)
-  score_text    — score any text 0-100 with the cadence-deslop detector
+Run:  linkedin-draft-mcp        (stdio transport; register in your MCP client)
+Requires:  pip install "linkedin-message-drafter[mcp]"  and Node + cadence-deslop.
 """
 from __future__ import annotations
 
 from mcp.server.fastmcp import FastMCP
 
-from .ai import build_draft_ai
-from .cadence import deslop
-from .drafts import Prospect
+from .cadence import deslop_fix
 
 mcp = FastMCP("linkedin-message-drafter")
 
 
 @mcp.tool()
-def draft_message(name: str, context: str, goal: str, company: str = "",
-                  role: str = "", relationship: str = "", short: bool = False) -> dict:
-    """Draft a personalized LinkedIn outreach message. Never scrapes or sends.
+def deslop(text: str) -> dict:
+    """Clean AI-slop from a draft with Cadence's deterministic detector.
+
+    Returns the mechanically-cleaned text plus the tells that still need a manual
+    rewrite in the user's voice (e.g. uniform rhythm, hollow confidence). After
+    calling this, rewrite the `remaining` tells yourself in the user's voice.
 
     Args:
-        name: The prospect's name (greeting uses the first name).
-        context: The specific thing you noticed (a post, talk, project).
-        goal: What you want, in one line.
-        company: The prospect's company (optional).
-        role: The prospect's role/title (optional).
-        relationship: How you know them, if at all (optional).
-        short: If true, a connection-request note under 300 characters.
+        text: The draft to clean.
     """
-    prospect = Prospect.from_dict({
-        "name": name, "context": context, "goal": goal,
-        "company": company, "role": role, "relationship": relationship,
-    })
-    draft = build_draft_ai(prospect, short=short)
-    report = deslop(draft)
-    return {
-        "draft": draft,
-        "chars": len(draft),
-        "cadence_score": report["score"] if report else None,
-        "cadence_grade": report["grade"] if report else None,
-    }
-
-
-@mcp.tool()
-def score_text(text: str) -> dict:
-    """Score text 0-100 for AI-slop tells with the cadence-deslop detector.
-
-    Returns null fields when the detector isn't installed.
-    """
-    report = deslop(text)
-    if not report:
-        return {"score": None, "grade": None, "findings": []}
-    return {"score": report["score"], "grade": report["grade"],
-            "findings": [f["rule"] for f in report.get("findings", [])]}
+    result = deslop_fix(text)
+    if result is None:
+        return {"cleaned": text, "remaining": [],
+                "note": "cadence-deslop not installed; text returned unchanged"}
+    return result
 
 
 def main() -> int:

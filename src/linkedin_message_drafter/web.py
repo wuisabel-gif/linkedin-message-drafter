@@ -7,7 +7,6 @@ drafts/ and nothing is sent anywhere. ponytail: stdlib server, no web framework.
 from __future__ import annotations
 
 import html
-import json
 import sys
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs
@@ -65,9 +64,9 @@ def _render(values: dict, result: str = "") -> bytes:
 
 
 class Handler(BaseHTTPRequestHandler):
-    def _send(self, body: bytes, ctype: str = "text/html; charset=utf-8", status: int = 200):
-        self.send_response(status)
-        self.send_header("Content-Type", ctype)
+    def _send(self, body: bytes):
+        self.send_response(200)
+        self.send_header("Content-Type", "text/html; charset=utf-8")
         self.end_headers()
         self.wfile.write(body)
 
@@ -76,10 +75,7 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_POST(self):
         length = int(self.headers.get("Content-Length", 0))
-        raw = self.rfile.read(length)
-        if self.path == "/api/draft":  # JSON API — backs the ChatGPT GPT Action
-            return self._api_draft(raw)
-        form = parse_qs(raw.decode("utf-8"))
+        form = parse_qs(self.rfile.read(length).decode("utf-8"))
         values = {k: (v[0] if v else "") for k, v in form.items()}
         try:
             prospect = Prospect.from_dict(values)
@@ -92,22 +88,6 @@ class Handler(BaseHTTPRequestHandler):
                f"{len(draft)} chars" if report else f"{len(draft)} chars"
         result = RESULT.format(draft=html.escape(draft), meta=meta)
         self._send(_render(values, result))
-
-    def _api_draft(self, raw: bytes):
-        try:
-            data = json.loads(raw or b"{}")
-            prospect = Prospect.from_dict(data)
-            draft = build_draft_ai(prospect, short=bool(data.get("short")),
-                                   style=str(data.get("style", "")))
-        except (ValueError, json.JSONDecodeError) as exc:
-            self._send(json.dumps({"error": str(exc)}).encode(),
-                       "application/json", status=400)
-            return
-        report = deslop(draft)
-        body = {"draft": draft, "chars": len(draft),
-                "cadence_score": report["score"] if report else None,
-                "cadence_grade": report["grade"] if report else None}
-        self._send(json.dumps(body).encode(), "application/json")
 
     def log_message(self, *args):  # quiet: no per-request stderr noise
         pass

@@ -6,6 +6,11 @@ Write LinkedIn outreach that actually gets replies — personalized, warm, and r
 
 **Draft-first and safe by design.** It does **not** scrape LinkedIn, automate browser actions, or send anything on its own. You stay in control of every message — review, copy, send. Ready to automate? Wire in an approved LinkedIn integration through the adapter below.
 
+**No API key needed.** The best way to use it is inside an AI assistant you already
+pay for — Claude Code, Claude Desktop, Codex, Cursor, or ChatGPT — which does the
+writing on your existing subscription. See [Use it in your AI assistant](#use-it-in-your-ai-assistant--no-api-key). The standalone CLI works too: free offline via a
+built-in template, or with your own Anthropic API key for richer copy.
+
 ## Install
 
 ```bash
@@ -65,9 +70,12 @@ linkedin-draft --style punchy my-prospect.json
 
 `--short` works with both the template and AI paths; `--style` applies to AI drafts only. Available presets are the `.md` files in Cadence's `voices/` (`punchy`, `column`, `plain`, `dispatch`, …).
 
-## AI drafting (optional)
+## AI drafting via the API (advanced / power users)
 
-Set `ANTHROPIC_API_KEY` to draft with Claude instead of the built-in template — richer, more personalized copy. With no key set, the tool uses the dependency-free template and works fully offline.
+Prefer the assistant path above — it needs no key. But if you want the *standalone
+CLI* to generate AI copy (for scripting or batch runs), set `ANTHROPIC_API_KEY` to
+draft with Claude. This uses the pay-as-you-go Anthropic API (a subscription does
+**not** cover it). With no key set, the CLI uses the dependency-free template and works fully offline.
 
 ```bash
 export ANTHROPIC_API_KEY=sk-ant-...
@@ -91,23 +99,34 @@ npm install -g cadence-deslop                 # or: export CADENCE_DESLOP=/path/
 
 For a deeper voice pass, run the [`/cadence`](https://github.com/wuisabel-gif/Cadence) skill on any saved draft in `drafts/`.
 
-## Use it inside Claude or ChatGPT
+## Use it in your AI assistant — no API key
 
-The drafter plugs into AI assistants three ways:
+**This is the recommended way.** Your own assistant does the writing, powered by
+the Claude / Codex / ChatGPT subscription you already pay for — no API key, no
+hosting, no per-message cost. The assistant learns your voice, drafts in it, and
+cleans the AI-slop with Cadence.
 
-- **MCP server** (Claude Desktop/Code, ChatGPT MCP connector). Install the extra and register `linkedin-draft-mcp`:
+**Skill** (Claude Code, Codex, Cursor — anything that reads skills):
 
-  ```bash
-  pip install "linkedin-message-drafter[mcp]"
-  ```
+Drop [`skills/linkedin-drafter/SKILL.md`](skills/linkedin-drafter/SKILL.md) into
+your assistant's skills directory. Then just ask it to draft a LinkedIn message —
+it follows the **learn → draft → deslop** flow, running `npx cadence-deslop --fix`
+itself to clean the result.
 
-  It exposes `draft_message` and `score_text` tools over stdio. Point your MCP client at the `linkedin-draft-mcp` command.
+**MCP server** (Claude Desktop, ChatGPT — apps that can't run a terminal):
 
-- **Claude Skill** — `skills/linkedin-drafter/SKILL.md`. Drop it into your Claude skills directory (or plugin) and Claude drafts on request.
+These can't run `npx`, so they reach Cadence through an MCP tool instead. Install
+the extra and register `linkedin-draft-mcp` in your MCP client:
 
-- **ChatGPT GPT Action** — `integrations/chatgpt-action-openapi.yaml`. Host the JSON backend (`linkedin-draft-web` serves `POST /api/draft`) behind a public HTTPS URL, set that URL in the spec's `servers`, and import it as an Action in a custom GPT.
+```bash
+pip install "linkedin-message-drafter[mcp]"
+```
 
-All three stay draft-only: they return a message (and its Cadence slop score); nothing is scraped or sent.
+It exposes one tool — `deslop` — which cleans a draft with Cadence and returns
+the tells still needing a voice rewrite. The assistant writes the draft; the tool
+cleans it. Needs Node + `cadence-deslop` on the machine running the server.
+
+Both paths stay draft-only — nothing is scraped or sent.
 
 ## Adding an approved API integration
 

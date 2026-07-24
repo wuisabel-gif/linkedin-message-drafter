@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "linkedin-message-drafter"
-version = "0.1.2"
+version = "0.1.3"
 description = "Draft-first CLI for personalized LinkedIn outreach — template or Claude-backed drafts with voice matching. Never scrapes or auto-sends."
 readme = "README.md"
 requires-python = ">=3.10"

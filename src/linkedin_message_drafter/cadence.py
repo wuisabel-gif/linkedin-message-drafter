@@ -25,20 +25,42 @@ def _command() -> list[str] | None:
     return [binary] if binary else None
 
 
+def _run(args: list[str], text: str) -> subprocess.CompletedProcess | None:
+    cmd = _command()
+    if not cmd:
+        return None
+    try:
+        return subprocess.run([*cmd, *args], input=text,
+                              capture_output=True, text=True, timeout=30)
+    except (OSError, subprocess.SubprocessError):
+        return None
+
+
 def deslop(text: str) -> dict | None:
     """Return cadence-deslop's JSON report for `text` (score/grade/findings), or None.
 
     None means the tool wasn't available or errored — callers treat that as
     "skip the slop check", never as a clean score.
     """
-    cmd = _command()
-    if not cmd:
+    proc = _run(["--json"], text)
+    if not proc:
         return None
     try:
-        proc = subprocess.run(
-            [*cmd, "--json"], input=text,
-            capture_output=True, text=True, timeout=30,
-        )
         return json.loads(proc.stdout)  # empty/failed stdout -> ValueError -> None
-    except (OSError, ValueError, subprocess.SubprocessError):
+    except ValueError:
         return None
+
+
+def deslop_fix(text: str) -> dict | None:
+    """Mechanically clean AI-slop from `text` with cadence-deslop --fix.
+
+    Returns {"cleaned": str, "remaining": [rule, ...]} — the auto-cleaned text
+    plus the tells that still need a manual (voice) rewrite. None if unavailable.
+    """
+    proc = _run(["--fix"], text)
+    if not proc or not proc.stdout:
+        return None
+    cleaned = proc.stdout.rstrip("\n")
+    report = deslop(cleaned)  # what still needs a human/LLM rewrite
+    remaining = sorted({f["rule"] for f in report["findings"]}) if report else []
+    return {"cleaned": cleaned, "remaining": remaining}
