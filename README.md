@@ -2,7 +2,9 @@
 
 [![CI](https://github.com/wuisabel-gif/linkedin-message-drafter/actions/workflows/ci.yml/badge.svg)](https://github.com/wuisabel-gif/linkedin-message-drafter/actions/workflows/ci.yml)
 
-Write LinkedIn outreach that actually gets replies — personalized, warm, and ready in seconds. Feed it a name and a bit of context; it hands back a concise, human-sounding draft you can send as-is or tweak.
+A lightweight CLI companion to [Cadence](https://github.com/wuisabel-gif/Cadence) for LinkedIn outreach. Feed it a name and a bit of context; it hands back a concise, human-sounding draft you review and send yourself.
+
+It handles the outreach-specific plumbing — batch/CSV input, the deterministic ≤300-character connection-note limit, offline templates. For the smart part (voice-matching and AI-slop cleanup), it defers to **Cadence**. If you just want great outreach, `/cadence write` plus a voice covers most of it; this repo is the scriptable/offline CLI around that.
 
 **Draft-first and safe by design.** It does **not** scrape LinkedIn, automate browser actions, or send anything on its own. You stay in control of every message — review, copy, send. Ready to automate? Wire in an approved LinkedIn integration through the adapter below.
 
