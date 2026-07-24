@@ -2,7 +2,7 @@ openapi: 3.1.0
 info:
   title: LinkedIn Message Drafter
   description: Draft a personalized LinkedIn outreach message. Never scrapes or sends.
-  version: 0.1.1
+  version: 0.1.2
 servers:
   # Replace with your own HTTPS host. Run the backend with `linkedin-draft-web`
   # (POST /api/draft) behind a public HTTPS endpoint — e.g. a reverse proxy or
